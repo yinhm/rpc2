@@ -130,6 +130,16 @@ func (c *jsonCodec) ReadHeader(req *rpc2.Request, resp *rpc2.Response) error {
 
 var errMissingParams = errors.New("jsonrpc: request body missing params")
 
+// convert params to a slice, default are the same as net/rpc.
+func paramsToSlice(params interface{}) []interface{} {
+	switch params.(type) {
+	case []interface{}:
+		return params.([]interface{})
+	default:
+		return []interface{}{params}
+	}
+}
+
 func (c *jsonCodec) ReadRequestBody(x interface{}) error {
 	if x == nil {
 		return nil
@@ -141,7 +151,7 @@ func (c *jsonCodec) ReadRequestBody(x interface{}) error {
 	// RPC params is struct.
 	// Unmarshal into array containing struct for now.
 	// Should think about making RPC more general.
-	params := []interface{}{x}
+	params := paramsToSlice(x)
 	return json.Unmarshal(*c.serverRequest.Params, &params)
 
 }
@@ -155,7 +165,7 @@ func (c *jsonCodec) ReadResponseBody(x interface{}) error {
 
 func (c *jsonCodec) WriteRequest(r *rpc2.Request, param interface{}) error {
 	c.clientRequest.Method = r.Method
-	c.clientRequest.Params = []interface{}{param}
+	c.clientRequest.Params = paramsToSlice(param)
 	if r.Seq == 0 {
 		// Notification
 		c.clientRequest.Id = nil
