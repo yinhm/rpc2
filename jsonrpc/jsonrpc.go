@@ -42,9 +42,9 @@ func NewJSONCodec(conn io.ReadWriteCloser) rpc2.Codec {
 }
 
 type clientRequest struct {
-	Method string         `json:"method"`
-	Params []interface{} `json:"params"`
-	Id     *uint64        `json:"id"`
+	Method string        `json:"method"`
+	Params interface{} `json:"params"`
+	Id     *uint64       `json:"id"`
 }
 type serverRequest struct {
 	Method string           `json:"method"`
@@ -151,8 +151,7 @@ func (c *jsonCodec) ReadRequestBody(x interface{}) error {
 	// RPC params is struct.
 	// Unmarshal into array containing struct for now.
 	// Should think about making RPC more general.
-	params := paramsToSlice(x)
-	return json.Unmarshal(*c.serverRequest.Params, &params)
+	return json.Unmarshal(*c.serverRequest.Params, &x)
 
 }
 
@@ -163,9 +162,9 @@ func (c *jsonCodec) ReadResponseBody(x interface{}) error {
 	return json.Unmarshal(*c.clientResponse.Result, x)
 }
 
-func (c *jsonCodec) WriteRequest(r *rpc2.Request, param interface{}) error {
+func (c *jsonCodec) WriteRequest(r *rpc2.Request, params interface{}) error {
 	c.clientRequest.Method = r.Method
-	c.clientRequest.Params = paramsToSlice(param)
+	c.clientRequest.Params = params
 	if r.Seq == 0 {
 		// Notification
 		c.clientRequest.Id = nil
